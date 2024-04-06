@@ -1,11 +1,13 @@
-import * as React from 'react';
-import { ScrollView, StyleSheet, Button, Text, View, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+
 
 const myData = [
   { id: 1, name: "Amy's Ice Cream", description: "Amy's Ice Creams is a privately owned chain of ice cream shops in Texas with headquarters in Austin. The Austin Chronicle described Amy's as a \"quintessentially Austin institution\" which \"dominates the local ice cream scene.\" Amy's ice cream is owned by Amy Simmons.", image: require('./images/amyicecream.jpeg')},
@@ -34,6 +36,7 @@ function ExploreScreen({ navigation }) {
 
 function SearchScreen({ navigation }) {
   navigation = useNavigation();
+
 
   const handleLocationPress = (location) => {
     navigation.navigate('LocationDetails', { location });
@@ -101,13 +104,62 @@ function ProfileScreen({ navigation }) {
 
 function LocationDetailsScreen({ route, navigation }) {
   const { location } = route.params;
+  const [isFavorite, setIsFavorite] = useState(false);
+  navigation = useNavigation();
+
+  
+
+  useEffect(() => {
+    // Load favorite status from local storage
+    loadFavoriteStatus();
+  }, []);
+
+  useEffect(() => {
+    // Save favorite status to local storage whenever it changes
+    saveFavoriteStatus();
+  }, [isFavorite]);
+
+  const loadFavoriteStatus = async () => {
+    try {
+      // Load favorite status from local storage
+      const favoriteStatus = await AsyncStorage.getItem('favorite_' + location.id);
+      if (favoriteStatus !== null) {
+        setIsFavorite(JSON.parse(favoriteStatus));
+      }
+    } catch (error) {
+      console.error('Error loading favorite status:', error);
+    }
+  };
+
+
+  const saveFavoriteStatus = async () => {
+    try {
+      // Save favorite status to local storage
+      await AsyncStorage.setItem('favorite_' + location.id, JSON.stringify(isFavorite));
+    } catch (error) {
+      console.error('Error saving favorite status:', error);
+    }
+  };
+
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+  };
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: '',
       headerBackTitleVisible: false,
-      headerTitle:'',
+      headerRight: () => (
+        <TouchableOpacity onPress={toggleFavorite} style={{ marginRight: 20 }}>
+          <Ionicons
+            name={isFavorite ? 'star' : 'star-outline'}
+            size={27}
+            color={isFavorite ? '#B973DA' : 'black'}
+          />
+        </TouchableOpacity>
+      ),
     });
-  }, [navigation]);
+  }, [navigation, isFavorite]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -173,7 +225,7 @@ export default function App() {
 
         return <Ionicons name={iconName} size={size} color={color} />;
       },
-      tabBarActiveTintColor: 'purple',
+      tabBarActiveTintColor: '#B973DA',
       tabBarInactiveTintColor: 'gray',
       headerShown: false,
       tabBarShowLabel: false,
@@ -189,7 +241,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   searchContainer: {
-      paddingTop: 250,
+      paddingTop: 220,
       flexGrow: 1,
   },
   searchText: {
