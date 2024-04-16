@@ -8,7 +8,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import ExploreScreen from './ExploreScreen';
 import ProfileScreen from './ProfileScreen';
-// import SearchScreen from './SearchScreen';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const myData = [
